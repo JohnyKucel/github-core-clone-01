@@ -36,13 +36,13 @@ export function createApp(): Server {
           return;
         }
 
+        const rid = { 'x-github-request-id': requestId() };
+
         // Everything else needs the suite's bearer <redacted>.
         if (TOKEN === '' || bearerToken(req) !== TOKEN) {
-          sendJson(res, 401, { message: 'Requires authentication' });
+          sendJson(res, 401, { message: 'Requires authentication' }, rid);
           return;
         }
-
-        const rid = { 'x-github-request-id': requestId() };
 
         if (method === 'POST' && path === '/api/graphql') {
           await handleGraphql(store, req, res, rid);
@@ -62,7 +62,7 @@ export function createApp(): Server {
       } catch (err) {
         // Never leak a stack or HTML: a JSON 500 keeps the server up.
         try {
-          sendJson(res, 500, { message: 'Internal Server Error' });
+          sendJson(res, 500, { message: 'Internal Server Error' }, { 'x-github-request-id': requestId() });
         } catch {
           // response already gone; nothing to do
         }
